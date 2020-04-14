@@ -3,7 +3,7 @@
 /**
 * Plugin Name: Version ST24
 * Description: Version control for ST24.
-* Version: 1.0.2
+* Version: 1.0.3
 * Domain: st24
 * Author: Titans24
 * Author URI: http://titans24.com/
