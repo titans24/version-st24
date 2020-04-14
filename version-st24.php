@@ -3,7 +3,7 @@
 /**
 * Plugin Name: Version ST24
 * Description: Version control for ST24.
-* Version: 1.0.1
+* Version: 1.0.2
 * Domain: st24
 * Author: Titans24
 * Author URI: http://titans24.com/
@@ -14,6 +14,7 @@ if ( ! class_exists( 'version_st24' ) ) {
     class version_st24 {
 
         protected $repository;
+
         protected $dashboard;
 
         /**
@@ -21,20 +22,27 @@ if ( ! class_exists( 'version_st24' ) ) {
          */
         public function __construct() {
             // init
+            $plugin        = plugin_basename(__FILE__);
+
+            // 
+            if( !is_admin() ) {
+                return;
+            }
             
-
-            require_once dirname( __FILE__ ) . '/includes/class-dashboard.php';
-            require_once dirname( __FILE__ ) . '/includes/class-repository.php';
-
+            require_once dirname( __FILE__ ) . '/version-st24/includes/class-dashboard.php';
+            require_once dirname( __FILE__ ) . '/version-st24/includes/class-repository.php';
+            
             // init object
             $this->repository = new version_st24_repository( '../' );
+
+            // https://wordpress.org/support/article/roles-and-capabilities/
+            // http://rachievee.com/the-wordpress-hooks-firing-sequence/
 
             // plugin template
             add_action( 'admin_enqueue_scripts', array( $this, 'add_custom_admin_style' ) );
             add_action( 'wp_enqueue_scripts', array( $this, 'add_custom_admin_style' ) );
 
             // plugin page - add dashboard link
-            $plugin = plugin_basename(__FILE__);
             add_filter( "plugin_action_links_$plugin", array( $this, 'add_plugin_link' ) );
 
             // admin notice & admin bar
@@ -44,6 +52,8 @@ if ( ! class_exists( 'version_st24' ) ) {
             // init dashboard
             $this->dashboard = new version_st24_dashboard();
         }
+
+
 
 
         public static function add_plugin_link( $links ) {
@@ -90,7 +100,7 @@ if ( ! class_exists( 'version_st24' ) ) {
             // permisions
             if ( current_user_can( 'manage_options' ) ) {
 
-                wp_register_style( 'add_custom_wp_toolbar_css', plugin_dir_url( __FILE__ ) . 'includes/style-admin.css', array(), false, 'screen' );
+                wp_register_style( 'add_custom_wp_toolbar_css', plugin_dir_url( __FILE__ ) . 'version-st24/includes/style-admin.css', array(), false, 'screen' );
                 wp_enqueue_style( 'add_custom_wp_toolbar_css' );
             }
         }

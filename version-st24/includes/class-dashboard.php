@@ -61,7 +61,10 @@ if ( ! class_exists( 'version_st24_dashboard' ) ) {
 
             echo '<h1>Version ST24 / Dashboard</h1>';
             echo '<h4>Current branch: <span class="branch-name">' . $current_branch . '</span></h4>';
-            echo '<a href="tools.php?page=version_st24&sync=true" type="button" class="btn btn-primary w-200 button-sync">SYNC</a>';
+            echo '<div class="button-sync">';
+            echo '<a href="tools.php?page=version_st24&sync=true" type="button" class="btn btn-primary w-200 button-sync1">SAVE</a>';
+            echo '<br>*send your changes to application repository';
+            echo '</div>';
 
             $table_col = array(
                 '#',
@@ -72,7 +75,8 @@ if ( ! class_exists( 'version_st24_dashboard' ) ) {
                 'Branch',
             );
 
-            echo '<table class="table ">';
+            echo '<div style="overflow-x:auto;">';
+            echo '<table class="table">';
 
             echo '<thead>';
             echo '<tr>';
@@ -95,7 +99,7 @@ if ( ! class_exists( 'version_st24_dashboard' ) ) {
                 echo '<td class="center">' . $commit['hash'] . '</td>';
                 echo '<td>' . $name . '</td>';
                 echo '<td>' . $commit['author'] . '</td>';
-                echo '<td>' . $commit['date'] . '</td>';
+                echo '<td class="date">' . $commit['date'] . '</td>';
                 echo '<td>' . $branch . '</td>';
 
                 echo '<tr>';
@@ -103,6 +107,7 @@ if ( ! class_exists( 'version_st24_dashboard' ) ) {
             echo '</tbody>';
 
             echo '</table>';
+            echo '</div>';
 
             echo '<small>*last ' . $commits_limit . ' commits</small>';
 

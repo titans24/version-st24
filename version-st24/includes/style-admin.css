@@ -36,6 +36,13 @@
     max-width: 1100px;
 }
 
+.version-dashboard .error-message {
+    margin: 20px;
+    padding: 10px;
+    color: red;
+    border: 1px solid red;
+}
+
 .version-dashboard .notice {
     margin-top: 15px;
 }
@@ -47,9 +54,16 @@
 }
 
 .version-dashboard .button-sync {
-    position: absolute;
-    right: 20px;
-    top: 5px;
+    
+    font-size: 9px;
+    text-align: center;
+}
+@media only screen and (min-width: 780px) {
+    .version-dashboard .button-sync {
+        position: absolute;
+        right: 5px;
+        top: 5px;
+    }   
 }
 
 .version-dashboard .repo-config {
@@ -58,13 +72,27 @@
     line-height: 10px;;
 }
 
+.version-dashboard .table-content {
+    overflow-x:auto;
+}
+
+
+
 .table {
-    width: 100%;
+    width: 600px;
     color: #212529;
+}
+@media only screen and (min-width: 780px) {
+    .table {
+        width: 100%;
+    }   
 }
 
 .table .center {
     text-align: center;
+}
+.table .date {
+    min-width: 110px;
 }
 
 .table th,
@@ -116,6 +144,7 @@
     border-color: #0062cc;
     cursor: pointer;
 }
+
 
 .w-100 {
     width: 100px;

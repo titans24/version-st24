@@ -10,6 +10,9 @@ if ( ! class_exists( 'version_st24_repository' ) ) {
         /** @var  string|NULL  @internal */
         protected $cwd;
 
+        /** @var  string|NULL  @internal */
+        protected $errorMessage;
+
         /**
          * @param  string
          * @throws GitException
@@ -19,11 +22,21 @@ if ( ! class_exists( 'version_st24_repository' ) ) {
                 $repository = dirname( $repository );
             }
 
-            $this->repository = realpath( $repository );
+            $this->repository = realpath($repository);
 
-            if ( false === $this->repository ) {
-                throw new GitException( "Repository '$repository' not found." );
+            if (false === $this->repository) {
+                $this->errorMessage = "Repository '$repository' not found.";
+
+                throw new GitException("Repository '$repository' not found.");
             }
+        }
+
+        /**
+         * @return  string
+         */
+        public function getErrorMessage()
+        {
+            return $this->errorMessage;
         }
 
         /**
@@ -35,13 +48,13 @@ if ( ! class_exists( 'version_st24_repository' ) ) {
          */
         public function hasChanges() {
             // Make sure the `git status` gets a refreshed look at the working tree.
-            $this->begin()
-                ->run( 'git update-index -q --refresh' )
-                ->end();
+            $this->begin();
+            $this->run('git update-index -q --refresh');
+            $this->end();
 
             $output = $this->extractFromCommand( 'git status --porcelain' );
 
-            return ! empty( $output );
+            return !empty($output);
         }
 
         /**
@@ -88,13 +101,14 @@ if ( ! class_exists( 'version_st24_repository' ) ) {
                     return FALSE;
                 });
 
-                if(is_array($branch))
-                {
+                if (is_array($branch)) {
                     return $branch[0];
                 }
+
+                throw new GitException('Getting current branch name failed.');
+            } catch (GitException $e) {
+                $this->errorMessage = 'Getting current branch name failed.';
             }
-            catch(GitException $e) {}
-            throw new GitException( 'Getting current branch name failed.' );
         }
 
         /**
@@ -104,7 +118,8 @@ if ( ! class_exists( 'version_st24_repository' ) ) {
          * @return string
          * @throws GitException
          */
-        public function getCommits( $limit = 20 ) {
+        public function getCommits($limit = 20)
+        {
             try {
                 $result = array();
 
@@ -112,9 +127,9 @@ if ( ! class_exists( 'version_st24_repository' ) ) {
                     'git log --pretty=format:"%h #@# %ad #@# %s #@# %d #@# %an" --date=relative'
                 );
 
-                if ( is_array( $commits ) ) {
-                    foreach ( $commits as $key => $commit ) {
-                        if ( $limit <= $key ) {
+                if (is_array($commits)) {
+                    foreach ($commits as $key => $commit) {
+                        if ($limit <= $key) {
                             continue;
                         }
 
@@ -128,24 +143,32 @@ if ( ! class_exists( 'version_st24_repository' ) ) {
                         );
                     }
                 }
-
-            } catch ( Exception  $e ) {
-                echo 'Getting commits data failed.';
+            } catch (GitException  $e) {
+                $this->errorMessage = 'Getting commits data failed.';
             } finally {
                 return $result;
             }
         }
 
-        public function syncRepository( $version, $message = 'version ST24 auto sync', $author_email = 'unknow@titans24.com', $author_name = 'Version ST24' ) {
+        public function syncRepository($version, $message = 'version ST24 auto sync', $author_email = 'unknow@titans24.com', $author_name = 'Version ST24')
+        {
+            try {
+                $commit_info = ' <' . date('Ymd-His') . '> <' . $author_email . '> ' . $message;
 
-            $commit_info = ' <' . date( 'Ymd-His' ) . '> <' . $author_email . '> ' . $message;
-
-            return $this->begin()
-                ->run( 'git add .' )
-                ->run( 'git commit -m "' . $commit_info . '"' )
-                ->run( 'git push -u origin release/' . $version )
-                ->end();
+                $this->begin();
+                $this->run('git add .')
+                    ->run('git commit -m "' . $commit_info . '"')
+                    ->run('git push -u origin release/' . $version);
+                return $this->end();
+            } catch (GitException  $e) {
+                $this->errorMessage = 'Repository sync data failed.';
+            }
         }
+
+
+
+
+
 
 
         /**
@@ -153,8 +176,9 @@ if ( ! class_exists( 'version_st24_repository' ) ) {
          */
         protected function begin()
         {
-            if($this->cwd === NULL)
-            {
+            $this->errorMessage = NULL;
+
+            if ($this->cwd === NULL) {
                 $this->cwd = getcwd();
                 chdir($this->repository);
             }
@@ -169,17 +193,27 @@ if ( ! class_exists( 'version_st24_repository' ) ) {
          * @return self
          * @throws GitException
          */
-        protected function run( $cmd )
+        protected function run($cmd)
         {
-            $args = func_get_args();
-            $cmd  = self::processCommand( $args );
-            exec( $cmd . ' 2>&1', $output, $ret );
+            try {
+                if ($this) {
 
-            if( $ret !== 0 ) {
-                throw new GitException("Command '$cmd' failed (exit-code $ret).", $ret);
+                    $args = func_get_args();
+                    $cmd  = self::processCommand($args);
+                    exec($cmd . ' 2>&1', $output, $ret);
+
+                    if ($ret !== 0) {
+                        throw new GitException("Command '$cmd' failed (exit-code $ret).", $ret);
+                    }
+                } else {
+                    die('aaaa');
+                    $this->errorMessage = 'EMPTY repository';
+                }
+
+                return $this;
+            } catch (GitException $e) {
+                $this->errorMessage = $e->errorMessage();
             }
-
-            return $this;
         }
 
         protected static function processCommand(array $args)
@@ -188,24 +222,18 @@ if ( ! class_exists( 'version_st24_repository' ) ) {
 
             $programName = array_shift($args);
 
-            foreach($args as $arg)
-            {
-                if(is_array($arg))
-                {
-                    foreach($arg as $key => $value)
-                    {
+            foreach ($args as $arg) {
+                if (is_array($arg)) {
+                    foreach ($arg as $key => $value) {
                         $_c = '';
 
-                        if(is_string($key))
-                        {
+                        if (is_string($key)) {
                             $_c = "$key ";
                         }
 
                         $cmd[] = $_c . escapeshellarg($value);
                     }
-                }
-                elseif(is_scalar($arg) && !is_bool($arg))
-                {
+                } elseif (is_scalar($arg) && !is_bool($arg)) {
                     $cmd[] = escapeshellarg($arg);
                 }
             }
@@ -218,12 +246,16 @@ if ( ! class_exists( 'version_st24_repository' ) ) {
          */
         protected function end()
         {
-            if(is_string($this->cwd))
-            {
-                chdir($this->cwd);
+            if ($this) {
+                if (is_string($this->cwd)) {
+                    chdir($this->cwd);
+                }
+
+                $this->cwd = NULL;
+            } else {
+                $this->errorMessage = 'END error';
             }
 
-            $this->cwd = NULL;
             return $this;
         }
 
@@ -235,48 +267,51 @@ if ( ! class_exists( 'version_st24_repository' ) ) {
          */
         protected function extractFromCommand($cmd, $filter = NULL)
         {
-            $output = array();
-            $exitCode = NULL;
+            $output   = array();
+            $exitCode = null;
 
-            $this->begin();
-            exec("$cmd", $output, $exitCode);
-            $this->end();
+            try {
+                $this->begin();
+                exec("$cmd", $output, $exitCode);
+                $this->end();
 
-            if($exitCode !== 0 || !is_array($output))
-            {
-                throw new GitException("Command $cmd failed.");
-            }
-
-            if($filter !== NULL)
-            {
-                $newArray = array();
-
-                foreach($output as $line)
-                {
-                    $value = $filter($line);
-
-                    if($value === FALSE)
-                    {
-                        continue;
-                    }
-
-                    $newArray[] = $value;
+                if ($exitCode !== 0 || !is_array($output)) {
+                    throw new GitException("Command $cmd failed.");
                 }
 
-                $output = $newArray;
-            }
+                if ($filter !== NULL) {
+                    $newArray = array();
 
-            if(!isset($output[0])) // empty array
-            {
-                return NULL;
+                    foreach ($output as $line) {
+                        $value = $filter($line);
+
+                        if ($value === FALSE) {
+                            continue;
+                        }
+
+                        $newArray[] = $value;
+                    }
+
+                    $output = $newArray;
+                }
+
+                if (!isset($output[0])) // empty array
+                {
+                    return NULL;
+                }
+            } catch (GitException $e) {
+                $this->errorMessage = $e->errorMessage();
             }
 
             return $output;
         }
-
     }
 }
 
 class GitException extends \Exception
 {
+    public function errorMessage()
+    {
+        return $this->message ?? 'GitException! Error message is missing.';
+    }
 }
