@@ -101,8 +101,8 @@ if ( ! class_exists( 'version_st24_repository' ) ) {
                     return FALSE;
                 });
 
-                if (is_array($branch)) {
-                    return $branch[0];
+                if ( is_array($branch) ) {
+                    return $branch[0] ?? '---';
                 }
 
                 throw new GitException('Getting current branch name failed.');
