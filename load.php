@@ -38,7 +38,7 @@ function cst_menu_order( $menu_order ) {
 
     foreach ( $menu as $key => $item ) {
         if ( 'activity_log_page' === $item[2] ) {
-            if ( 'support@titans24.com' !== wp_get_current_user()->user_email ) {
+            if ( false === in_array( wp_get_current_user()->user_email, [ 'support@titans24.com', 'admin@titans24.com', 'admin@25wat.com' ], true ) ) {
                 unset( $menu[$key] );
             }
             break;
