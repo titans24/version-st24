@@ -18,6 +18,21 @@ function disable_plugin_deactivation( $actions, $plugin_file, $plugin_data, $con
 }
 add_filter( 'plugin_action_links', 'disable_plugin_deactivation', 10, 4 );
 
+function plugins_maintenance() {
+    global $wpdb;
+
+    // aryo-activity-log - create db table
+    $table_name   = $wpdb->prefix . "aryo_activity_log";
+    $query_result = $wpdb->get_var("SHOW TABLES LIKE '$table_name'");
+
+    if( $table_name !== $query_result ) {
+        require_once(ABSPATH . 'wp-content/mu-plugins/aryo-activity-log/classes/class-aal-maintenance.php');
+        $aryo_maintenance = new AAL_Maintenance();
+        $aryo_maintenance::activate(false);
+    }
+}
+add_action('admin_init', 'plugins_maintenance');
+
 
 function cst_menu_order( $menu_order ) {
     global $menu;
@@ -33,7 +48,7 @@ function cst_menu_order( $menu_order ) {
     $key = array_search( 'activity_log_page', $menu_order, true );
     if ( $menu_order[ $key ] ) {
         unset( $key );
-        $menu_order[] = 'activity_log_page';    // move to the end of the menu
+        $menu_order[] = 'activity_log_page';                   	// move to the end of the menu
     }
 
     foreach ( $menu as $key => $item ) {
