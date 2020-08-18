@@ -3,7 +3,7 @@
 /**
 * Plugin Name: Version ST24
 * Description: Version control for ST24.
-* Version: 1.0.5
+* Version: 1.0.6
 * Domain: st24
 * Author: Titans24
 * Author URI: http://titans24.com/
@@ -23,10 +23,10 @@ if ( ! class_exists( 'version_st24' ) ) {
          */
         public function __construct() {
             // init
-            $plugin        = plugin_basename(__FILE__);
+            $plugin   = plugin_basename(__FILE__);
 
-            // 
-            if( !is_admin() ) {
+            // show only on STAGE and for admin users
+            if ( !is_admin() || getenv('BLOG_PUBLIC') ) {
                 return;
             }
             
