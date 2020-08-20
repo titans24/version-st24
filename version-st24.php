@@ -19,13 +19,13 @@ if ( ! class_exists( 'version_st24' ) ) {
         private $version;
 
         /**
-         * Construct the plugin object
+         * Plugin Object Structure
          */
         public function __construct() {
             // init
             $plugin   = plugin_basename(__FILE__);
 
-            // show only on STAGE and for admin users
+            // Show only on STAGE and for Admin Users
             if ( !is_admin() || getenv('BLOG_PUBLIC') ) {
                 return;
             }
@@ -33,26 +33,26 @@ if ( ! class_exists( 'version_st24' ) ) {
             require_once dirname( __FILE__ ) . '/includes/class-dashboard.php';
             require_once dirname( __FILE__ ) . '/includes/class-repository.php';
             
-            // init object
+            // Initialize Plugin Object
             $this->repository = new version_st24_repository( './' );
 
-            // plugin template
+            // Plugin Template
             add_action( 'admin_enqueue_scripts', array( $this, 'add_custom_admin_style' ) );
             add_action( 'wp_enqueue_scripts', array( $this, 'add_custom_admin_style' ) );
 
-            // plugin page - add dashboard link
+            // Plugin Page - Add Dashboard Link
             add_filter( "plugin_action_links_$plugin", array( $this, 'add_plugin_link' ) );
 
-            // admin notice & admin bar
+            // Admin Notice & Admin Bar
             add_action( 'admin_notices', array( $this, 'show_admin_notice' ) );
             add_action( 'admin_bar_menu', array( $this, 'add_admin_bar_link' ), 999 );
 
-            // init dashboard
+            // Initialize Dashboard
             $this->dashboard = new version_st24_dashboard();
         }
 
         public function add_plugin_link( $links ) {
-            // permisions
+            // Permisions
             if ( current_user_can( 'manage_options' ) ) {
                 if ( $this->check_conditions() ) {
                     array_unshift( $links, '<a href="tools.php?page=version_st24">' . __( 'Dashboard', 'st24' ) . '</a>' );
@@ -63,12 +63,12 @@ if ( ! class_exists( 'version_st24' ) ) {
         }
 
         public function add_admin_bar_link( $wp_admin_bar ) {
-            // permisions
+            // Permisions
             if ( current_user_can( 'manage_options' ) ) {
 
                 if ( $this->check_conditions() ) {
 
-                    // message
+                    // Message
                     if ( true === $this->repository->hasChanges() ) {
                         $message_text  = __( 'Version ST24 running - needs synchronization', 'st24' );
                         $message_class = 'status-unsync';
@@ -77,14 +77,14 @@ if ( ! class_exists( 'version_st24' ) ) {
                         $message_class = 'status-sync';
                     }
 
-                    // message - in progress
+                    // Message - in progress
                     $sync_info = get_transient( 'version_sync_action' );
                     if ( 'started' === $sync_info ) {
                         $message_text  = __( 'Version ST24 running - in progress', 'st24' );
                         $message_class = 'status-unsync';
                     }
 
-                    // bar info
+                    // Bar Info
                     $wp_admin_bar->add_node(
                         array(
                             'id'     => 'editor-menu',
@@ -98,7 +98,7 @@ if ( ! class_exists( 'version_st24' ) ) {
         }
 
         public function add_custom_admin_style() {
-            // permisions
+            // Permisions
             if ( current_user_can( 'manage_options' ) ) {
 
                 wp_register_style( 'add_custom_wp_toolbar_css', plugin_dir_url( __FILE__ ) . 'includes/style-admin.css', array(), false, 'screen' );
@@ -107,13 +107,13 @@ if ( ! class_exists( 'version_st24' ) ) {
         }
 
         public function show_admin_notice() {
-            // permisions
+            // Permisions
             if ( current_user_can( 'manage_options' ) ) {
                 if ( $this->check_conditions() ) {
                     $sync_info = get_transient( 'version_sync_action' );
                     if ( 'started' === $sync_info ) {
                         
-                        // check sync result
+                        // Check Sync Result
                         if ( true === $this->repository->hasChanges() ) {
                             ?>
                                 <div class="notice notice-warning is-dismissible">
@@ -165,6 +165,6 @@ if ( ! class_exists( 'version_st24' ) ) {
 }
 
 if ( class_exists( 'version_st24' ) ) {
-    // instantiate the plugin class
+    // Initialize the Plugin Class
     $version_st24 = new version_st24();
 }
