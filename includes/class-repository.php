@@ -1,8 +1,9 @@
 <?php
 
-if ( ! class_exists( 'version_st24_repository' ) ) {
+if (!class_exists('version_st24_repository')) {
 
-    class version_st24_repository {
+    class version_st24_repository
+    {
 
         /** @var  string */
         protected $repository;
@@ -17,9 +18,10 @@ if ( ! class_exists( 'version_st24_repository' ) ) {
          * @param  string
          * @throws GitException
          */
-        public function __construct( $repository ) {
-            if ( '.git' === basename( $repository ) ) {
-                $repository = dirname( $repository );
+        public function __construct($repository)
+        {
+            if ('.git' === basename($repository)) {
+                $repository = dirname($repository);
             }
 
             $this->repository = realpath($repository);
@@ -46,13 +48,14 @@ if ( ! class_exists( 'version_st24_repository' ) ) {
          * @return bool
          * @throws GitException
          */
-        public function hasChanges() {
+        public function hasChanges()
+        {
             // Make sure the `git status` gets a refreshed look at the working tree.
             $this->begin();
             $this->run('git update-index -q --refresh');
             $this->end();
 
-            $output = $this->extractFromCommand( 'git status --porcelain' );
+            $output = $this->extractFromCommand('git status --porcelain');
 
             return !empty($output);
         }
@@ -63,8 +66,9 @@ if ( ! class_exists( 'version_st24_repository' ) ) {
          * @return string[]|NULL
          * @throws GitException
          */
-        public function getConfig() {
-            return $this->extractFromCommand( 'git config --list' );
+        public function getConfig()
+        {
+            return $this->extractFromCommand('git config --list');
         }
 
         /**
@@ -73,11 +77,12 @@ if ( ! class_exists( 'version_st24_repository' ) ) {
          * @return string[]|NULL  NULL => no branches
          * @throws GitException
          */
-        public function getBranches() {
+        public function getBranches()
+        {
             return $this->extractFromCommand(
                 'git branch -a',
-                function( $value ) {
-                    return trim( substr( $value, 1 ) );
+                function ($value) {
+                    return trim(substr($value, 1));
                 }
             );
         }
@@ -91,17 +96,16 @@ if ( ! class_exists( 'version_st24_repository' ) ) {
          */
         public function getCurrentBranchName()
         {
-            try
-            {
-                $branch = $this->extractFromCommand('git branch -a', function($value) {
-                    if ( isset($value[0]) && $value[0] === '*' ) {
+            try {
+                $branch = $this->extractFromCommand('git branch -a', function ($value) {
+                    if (isset($value[0]) && $value[0] === '*') {
                         return trim(substr($value, 1));
                     }
 
                     return FALSE;
                 });
 
-                if ( is_array($branch) ) {
+                if (is_array($branch)) {
                     return $branch[0] ?? '---';
                 }
 
@@ -124,29 +128,41 @@ if ( ! class_exists( 'version_st24_repository' ) ) {
                 $result = array();
 
                 $commits = $this->extractFromCommand(
-                    'git log --pretty=format:"%h #@# %ad #@# %s #@# %d #@# %an" --date=relative'
+                    'git log -n ' . $limit . ' --pretty=format:"%h #@# %at #@# %ar #@# %s #@# %d #@# %an #@#" --shortstat --reverse'
                 );
 
                 if (is_array($commits)) {
+                    $last_branch = null;
                     foreach ($commits as $key => $commit) {
-                        if ($limit <= $key) {
-                            continue;
+                        if (false !== strpos($commit, '#@#')) {
+                            $line     = array_map('trim', explode('#@#', $commit));
+
+                            if (strlen($line[4]) > 0) {
+                                $last_branch = $line[4];
+                            }
+
+                            $result[] = array(
+                                'hash'          => $line[0] ?? '---',
+                                'date'          => $line[1] ? date('Y.m.d H:i:s', $line[1]) : '---',
+                                'date_relative' => $line[2] ?? '---',
+                                'name'          => $line[3] ?? '---',
+                                'branch'        => $line[4] ?? $last_branch,
+                                'author'        => $line[5] ?? '---',
+                                'files'         => $line[6] ?? '---',
+                            );
                         }
 
-                        $line     = array_map( 'trim', explode( '#@#', $commit ) );
-                        $result[] = array(
-                            'hash'   => $line[0] ?? '---',
-                            'date'   => $line[1] ?? '---',
-                            'name'   => $line[2] ?? '---',
-                            'branch' => $line[3] ?? '---',
-                            'author' => $line[4] ?? '---',
-                        );
+                        if (false === strpos($commit, '#@#')) {
+                            if (strlen($commit) > 0) {
+                                $result[array_key_last($result)]['files'] = $commit;
+                            }
+                        }
                     }
                 }
             } catch (GitException  $e) {
                 $this->errorMessage = 'Getting commits data failed.';
             } finally {
-                return $result;
+                return array_reverse($result);
             }
         }
 
@@ -165,11 +181,42 @@ if ( ! class_exists( 'version_st24_repository' ) ) {
             }
         }
 
+        public function getRelease($config = null, $branches = null)
+        {
+            $release = '';
 
+            // search in config
+            if (!$config) {
+                $config = $this->getConfig();
+            }
+            $config = null;
+            if (is_array($config)) {
+                $matches = preg_grep("/heads\/release/", $config);
 
+                if (is_array($matches)) {
+                    $matches = array_values($matches);
+                    $release = substr(strstr($matches[0], 'heads'), 6);
+                }
+            }
 
+            // search in branches
+            if (!$release) {
+                if (!$branches) {
+                    $branches = $this->getBranches();
+                }
+                if (is_array($branches)) {
+                    $matches = preg_grep("/release/", $branches);
 
+                    if (is_array($matches)) {
+                        $matches = array_values($matches);
 
+                        $release = str_replace('remotes/origin/', '', $matches[0]);
+                    }
+                }
+            }
+
+            return $release;
+        }
 
         /**
          * @return self
@@ -188,7 +235,7 @@ if ( ! class_exists( 'version_st24_repository' ) ) {
 
         /**
          * Runs command.
-         * 
+         *
          * @param  string|array
          * @return self
          * @throws GitException
