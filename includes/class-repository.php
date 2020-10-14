@@ -42,8 +42,8 @@ if (!class_exists('version_st24_repository')) {
         }
 
         /**
-         * Exists changes?
-         * `git status` + magic
+         * Returns existing changes.
+         * `git status`
          *
          * @return bool
          * @throws GitException
@@ -72,7 +72,7 @@ if (!class_exists('version_st24_repository')) {
         }
 
         /**
-         * Returns list of all (local & remote) branches in repo.
+         * Returns list of all (local & remote) branches in repository.
          *
          * @return string[]|NULL  NULL => no branches
          * @throws GitException
@@ -88,8 +88,8 @@ if (!class_exists('version_st24_repository')) {
         }
 
         /**
-         * Gets name of current branch
-         * `git branch` + magic
+         * Returns name of current branch.
+         * `git branch`
          *
          * @return string
          * @throws GitException
@@ -116,8 +116,8 @@ if (!class_exists('version_st24_repository')) {
         }
 
         /**
-         * Gets commits data
-         * `git log` + magic
+         * Returns commits data.
+         * `git log`
          *
          * @return string
          * @throws GitException

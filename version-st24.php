@@ -20,7 +20,7 @@ if (!class_exists('version_st24')) {
         private $version;
 
         /**
-         * Construct the plugin object
+         * Plugin Object Structure
          */
         public function __construct()
         {
@@ -49,7 +49,7 @@ if (!class_exists('version_st24')) {
             add_action('admin_notices', array($this, 'show_admin_notice'));
             add_action('admin_bar_menu', array($this, 'add_admin_bar_link'), 999);
 
-            // init dashboard
+            // Initialize Dashboard
             $this->dashboard = new version_st24_dashboard();
         }
 
@@ -88,7 +88,7 @@ if (!class_exists('version_st24')) {
                         $message_class = 'status-unsync';
                     }
 
-                    // bar info
+                    // Bar Info
                     $wp_admin_bar->add_node(
                         array(
                             'id'     => 'editor-menu',
@@ -121,7 +121,7 @@ if (!class_exists('version_st24')) {
 
                         // check sync result
                         if (true === $this->repository->hasChanges()) {
-?>
+                        ?>
                             <div class="notice notice-warning is-dismissible">
                                 <p><?php _e('Application sync in progress (~3min)', 'st24'); ?></p>
                             </div>
@@ -148,7 +148,7 @@ if (!class_exists('version_st24')) {
                         <div class="notice notice-error">
                             <p><?php _e('Version ST24: VERSION is not valid!', 'st24'); ?></p>
                         </div>
-<?php
+                    <?php
                     }
                 }
             }
