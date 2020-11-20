@@ -189,6 +189,9 @@ input:focus, textarea:focus, select:focus{
     cursor: pointer;
 }
 
+.d-none {
+    display: none;
+}
 
 .w-100 {
     width: 100px;

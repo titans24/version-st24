@@ -26,7 +26,7 @@ if ( ! class_exists( 'version_st24' ) ) {
             $plugin = plugin_basename( __FILE__ );
 
             // show only on STAGE and for admin users
-            if ( ! is_admin() || ! getenv( 'BLOG_PUBLIC' ) ) {
+            if ( ! is_admin() || getenv( 'BLOG_PUBLIC' ) ) {
                 return;
             }
 
