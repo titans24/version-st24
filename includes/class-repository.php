@@ -40,8 +40,8 @@ if ( ! class_exists( 'version_st24_repository' ) ) {
         }
 
         /**
-         * Returns existing changes.
-         * `git status`
+         * Exists changes?
+         * `git status` + magic
          *
          * @return bool
          * @throws GitException
@@ -68,7 +68,7 @@ if ( ! class_exists( 'version_st24_repository' ) ) {
         }
 
         /**
-         * Returns list of all (local & remote) branches in repository.
+         * Returns list of all (local & remote) branches in repo.
          *
          * @return string[]|NULL  NULL => no branches
          * @throws GitException
@@ -83,8 +83,8 @@ if ( ! class_exists( 'version_st24_repository' ) ) {
         }
 
         /**
-         * Returns name of current branch.
-         * `git branch`
+         * Gets name of current branch
+         * `git branch` + magic
          *
          * @return string
          * @throws GitException
@@ -112,41 +112,53 @@ if ( ! class_exists( 'version_st24_repository' ) ) {
         }
 
         /**
-         * Returns commits data.
-         * `git log`
+         * Gets commits data
+         * `git log` + magic
          *
          * @return string
          * @throws GitException
          */
-        public function getCommits($limit = 20)
+        public function getCommits( $limit = 20 )
         {
             try {
                 $result = array();
 
                 $commits = $this->extractFromCommand(
-                    'git log --pretty=format:"%h #@# %ad #@# %s #@# %d #@# %an" --date=relative'
+                    'git log -n ' . $limit . ' --pretty=format:"%h #@# %at #@# %ar #@# %s #@# %d #@# %an #@#" --shortstat --reverse'
                 );
 
                 if (is_array($commits)) {
-                    foreach ($commits as $key => $commit) {
-                        if ($limit <= $key) {
-                            continue;
+                    $last_branch = null;
+                    foreach ($commits as $key => $commit ) {
+                        if ( false !== strpos( $commit, '#@#' ) ) {
+                            $line     = array_map( 'trim', explode( '#@#', $commit ) );
+                            
+                            if ( strlen( $line[4] ) > 0 ) {
+                                $last_branch = $line[4];
+                            }
+                            
+                            $result[] = array(
+                                'hash'          => $line[0] ?? '---',
+                                'date'          => $line[1] ? date('Y.m.d H:i:s', $line[1]) : '---', 
+                                'date_relative' => $line[2] ?? '---',
+                                'name'          => $line[3] ?? '---',
+                                'branch'        => $line[4] ?? $last_branch,
+                                'author'        => $line[5] ?? '---',
+                                'files'         => $line[6] ?? '---',
+                            );
                         }
-
-                        $line     = array_map( 'trim', explode( '#@#', $commit ) );
-                        $result[] = array(
-                            'hash'   => $line[0] ?? '---',
-                            'date'   => $line[1] ?? '---',
-                            'name'   => $line[2] ?? '---',
-                            'branch' => $line[3] ?? '---',
-                            'author' => $line[4] ?? '---',
-                        );
+                        
+                        if ( false === strpos( $commit, '#@#' ) ) {
+                            if ( strlen( $commit ) > 0 ) {
+                                $result[ array_key_last($result) ]['files'] = $commit;
+                            }
+                        }
                     }
                 }
             } catch (GitException  $e) {
                 $this->errorMessage = 'Getting commits data failed.';
             } finally {
-                return $result;
+                return array_reverse( $result );
             }
         }
 
@@ -157,13 +169,54 @@ if ( ! class_exists( 'version_st24_repository' ) ) {
 
                 $this->begin();
                 $this->run('git add .')
-                    ->run('git commit -m "' . $commit_info . '"')
-                    ->run('git push -u origin release/' . $version);
+                     ->run('git commit -m "' . $commit_info . '"')
+                     ->run('git push -u origin release/' . $version);
                 return $this->end();
+                
             } catch (GitException  $e) {
                 $this->errorMessage = 'Repository sync data failed.';
             }
         }
+
+
+        public function getRelease( $config = null, $branches = null ) {
+            $release = '';
+            
+            // search in config
+            if ( ! $config ) {
+                $config = $this->getConfig();
+            }
+            $config = null;
+            if ( is_array( $config ) ) {
+                $matches = preg_grep( "/heads\/release/", $config );
+                
+                if ( is_array( $matches ) ) {
+                    $matches = array_values( $matches );
+                    $release = substr( strstr( $matches[0], 'heads' ), 6 );
+                }
+            }
+            
+            // search in branches
+            if ( ! $release ) {
+                if ( ! $branches ) {
+                    $branches = $this->getBranches();
+                }
+                if ( is_array( $branches ) ) {
+                    $matches = preg_grep( "/release/", $branches );
+                    
+                    if ( is_array( $matches ) ) {
+                        $matches = array_values( $matches );
+                        
+                        $release = str_replace( 'remotes/origin/', '', $matches[0] );
+                    }
+                }
+            }
+            
+            return $release;
+        }
+    
+
+
 
         /**
          * @return self
@@ -181,7 +234,7 @@ if ( ! class_exists( 'version_st24_repository' ) ) {
         }
 
         /**
-         * Execute command.
+         * Runs command.
          * 
          * @param  string|array
          * @return self
