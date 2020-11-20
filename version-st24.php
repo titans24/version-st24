@@ -1,13 +1,13 @@
 <?php
 
 /**
-* Plugin Name: Version ST24
-* Description: Version control for ST24.
-* Version: 1.0.6
-* Domain: st24
-* Author: Titans24
-* Author URI: http://titans24.com/
-**/
+ * Plugin Name: Version ST24
+ * Description: Version control for ST24.
+ * Version: 1.0.7
+ * Domain: st24
+ * Author: Titans24
+ * Author URI: http://titans24.com/
+ **/
 
 if ( ! class_exists( 'version_st24' ) ) {
 
@@ -19,40 +19,40 @@ if ( ! class_exists( 'version_st24' ) ) {
         private $version;
 
         /**
-         * Plugin Object Structure
+         * Construct the plugin object
          */
         public function __construct() {
             // init
-            $plugin   = plugin_basename(__FILE__);
+            $plugin = plugin_basename( __FILE__ );
 
-            // Show only on STAGE and for Admin Users
-            if ( !is_admin() || getenv('BLOG_PUBLIC') ) {
+            // show only on STAGE and for admin users
+            if ( ! is_admin() || ! getenv( 'BLOG_PUBLIC' ) ) {
                 return;
             }
-            
+
             require_once dirname( __FILE__ ) . '/includes/class-dashboard.php';
             require_once dirname( __FILE__ ) . '/includes/class-repository.php';
-            
-            // Initialize Plugin Object
+
+            // init object
             $this->repository = new version_st24_repository( './' );
 
-            // Plugin Template
+            // plugin template
             add_action( 'admin_enqueue_scripts', array( $this, 'add_custom_admin_style' ) );
             add_action( 'wp_enqueue_scripts', array( $this, 'add_custom_admin_style' ) );
 
-            // Plugin Page - Add Dashboard Link
+            // plugin page - add dashboard link
             add_filter( "plugin_action_links_$plugin", array( $this, 'add_plugin_link' ) );
 
-            // Admin Notice & Admin Bar
+            // admin notice & admin bar
             add_action( 'admin_notices', array( $this, 'show_admin_notice' ) );
             add_action( 'admin_bar_menu', array( $this, 'add_admin_bar_link' ), 999 );
 
-            // Initialize Dashboard
+            // init dashboard
             $this->dashboard = new version_st24_dashboard();
         }
 
         public function add_plugin_link( $links ) {
-            // Permisions
+            // permisions
             if ( current_user_can( 'manage_options' ) ) {
                 if ( $this->check_conditions() ) {
                     array_unshift( $links, '<a href="tools.php?page=version_st24">' . __( 'Dashboard', 'st24' ) . '</a>' );
@@ -63,12 +63,12 @@ if ( ! class_exists( 'version_st24' ) ) {
         }
 
         public function add_admin_bar_link( $wp_admin_bar ) {
-            // Permisions
+            // permisions
             if ( current_user_can( 'manage_options' ) ) {
 
                 if ( $this->check_conditions() ) {
 
-                    // Message
+                    // message
                     if ( true === $this->repository->hasChanges() ) {
                         $message_text  = __( 'Version ST24 running - needs synchronization', 'st24' );
                         $message_class = 'status-unsync';
@@ -77,18 +77,18 @@ if ( ! class_exists( 'version_st24' ) ) {
                         $message_class = 'status-sync';
                     }
 
-                    // Message - in progress
+                    // message - in progress
                     $sync_info = get_transient( 'version_sync_action' );
                     if ( 'started' === $sync_info ) {
                         $message_text  = __( 'Version ST24 running - in progress', 'st24' );
                         $message_class = 'status-unsync';
                     }
 
-                    // Bar Info
+                    // bar info
                     $wp_admin_bar->add_node(
                         array(
                             'id'     => 'editor-menu',
-                            'title'	 => '<span class="ab-icon ' . $message_class . '"></span><span class="ab-label ' . $message_class . '">' . $message_text . '</span>',
+                            'title'  => '<span id="button_sync" class="ab-icon ' . $message_class . '"></span><span class="ab-label ' . $message_class . '">' . $message_text . '</span>',
                             'href'   => admin_url( 'tools.php?page=version_st24' ),
                             'parent' => 'top-secondary',
                         )
@@ -98,7 +98,7 @@ if ( ! class_exists( 'version_st24' ) ) {
         }
 
         public function add_custom_admin_style() {
-            // Permisions
+            // permisions
             if ( current_user_can( 'manage_options' ) ) {
 
                 wp_register_style( 'add_custom_wp_toolbar_css', plugin_dir_url( __FILE__ ) . 'includes/style-admin.css', array(), false, 'screen' );
@@ -107,22 +107,22 @@ if ( ! class_exists( 'version_st24' ) ) {
         }
 
         public function show_admin_notice() {
-            // Permisions
+            // permisions
             if ( current_user_can( 'manage_options' ) ) {
                 if ( $this->check_conditions() ) {
                     $sync_info = get_transient( 'version_sync_action' );
                     if ( 'started' === $sync_info ) {
-                        
-                        // Check Sync Result
+
+                        // check sync result
                         if ( true === $this->repository->hasChanges() ) {
                             ?>
                                 <div class="notice notice-warning is-dismissible">
-                                    <p><?php _e( 'Application sync in progress (~1min)', 'st24' ); ?></p>
+                                    <p><?php _e( 'Application sync in progress (~3min)', 'st24' ); ?></p>
                                 </div>
                                 <?php
                         } else {
                             set_transient( 'version_sync_action', 'finished', 60 );
-                            
+
                             ?>
                                 <div class="notice notice-success is-dismissible">
                                     <p><?php _e( 'Application is up to date. :)', 'st24' ); ?></p>
@@ -137,7 +137,7 @@ if ( ! class_exists( 'version_st24' ) ) {
                                 <p><?php _e( 'Version ST24: VERSION file does not exist!', 'st24' ); ?></p>
                             </div>
                         <?php
-                    } elseif ( true !==  $this->version_valid() ) {
+                    } elseif ( true !== $this->version_valid() ) {
                         ?>
                             <div class="notice notice-error">
                                 <p><?php _e( 'Version ST24: VERSION is not valid!', 'st24' ); ?></p>
@@ -165,6 +165,6 @@ if ( ! class_exists( 'version_st24' ) ) {
 }
 
 if ( class_exists( 'version_st24' ) ) {
-    // Initialize the Plugin Class
+    // instantiate the plugin class
     $version_st24 = new version_st24();
 }
