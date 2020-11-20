@@ -131,6 +131,7 @@ if ( ! class_exists( 'version_st24_dashboard' ) ) {
             echo '<div>';
             echo '<h5>DEBUG log - last 20 lines</h5>';
             echo '<textarea id="debug_log" class="debug_log" placeholder="unknow">' . $this->tailCustom( ABSPATH . '/wp-content/debug.log', 20 ) . '</textarea>';
+            echo '<button id="debug_button">take_focus</button>';
             echo '</div>';
 
             echo '<h5>Repository config</h5>';
@@ -146,10 +147,10 @@ if ( ! class_exists( 'version_st24_dashboard' ) ) {
             echo "<script>
                 jQuery( document ).ready(function() {
                     debug_log = jQuery('#debug_log');
+                    debug_but = jQuery('#debug_button');
                     debug_val = debug_log.val();
-                    debug_log.val('');
-                    debug_log.val(debug_val);
-                    debug_log.focus();
+                    debug_log.val('').val(debug_val).focus();
+                    debug_but.focus().addClass('d-none')
                 });
             </script>";
         }
