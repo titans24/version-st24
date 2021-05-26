@@ -159,7 +159,7 @@ if ( ! class_exists( 'version_st24' ) ) {
         }
 
         private function version_valid() {
-            return preg_match( '/^(\d+\.)(\d+\.)(\d+)$/', $this->version );
+            return !empty( $this->version );
         }
     }
 }
