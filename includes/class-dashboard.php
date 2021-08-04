@@ -8,7 +8,6 @@ if (!class_exists('version_st24_dashboard')) {
         protected $message = 'stage app sync request';
 
         public function __construct() {
-            // register actions
             add_action('admin_init', array(&$this, 'admin_init'));
             add_action('admin_menu', array(&$this, 'add_menu'));
 
@@ -19,7 +18,7 @@ if (!class_exists('version_st24_dashboard')) {
             if (isset($_GET['sync'])) {
                 if (true === filter_var($_GET['sync'], FILTER_VALIDATE_BOOLEAN)) {
 
-                    $version = @file_get_contents('./../VERSION');
+                    $version = $this->version_branch();
 
                     if ($version) {
 
@@ -40,6 +39,10 @@ if (!class_exists('version_st24_dashboard')) {
             return false;
         }
 
+        public function version_branch() {
+            return @file_get_contents('./../VERSION');
+        }
+
         public function add_menu() {
             add_management_page(
                 'Version ST24 Dashboard',
@@ -53,7 +56,7 @@ if (!class_exists('version_st24_dashboard')) {
         public function plugin_dashboard_page() {
 
             $repo_config    = $this->repository->getConfig();
-            $current_branch = $this->repository->getCurrentBranchName();
+            $current_branch = $this->version_branch() ?? '???';
             $commits_limit  = 20;
             $commits        = $this->repository->getCommits($commits_limit);
             $status         = $this->repository->hasChanges();

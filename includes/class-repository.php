@@ -168,9 +168,17 @@ if ( ! class_exists( 'version_st24_repository' ) ) {
                 $commit_info = ' <' . date('Ymd-His') . '> <' . $author_email . '> ' . $message;
 
                 $this->begin();
-                $this->run('git add .')
-                     ->run('git commit -m "' . $commit_info . '"')
-                     ->run('git push -u origin release/' . $version);
+
+                if ( false !== strpos( $version, '.' ) ) {
+                    $this->run('git add .')
+                         ->run('git commit -m "' . $commit_info . '"')
+                         ->run('git push -u origin release/' . $version);
+                } else {
+                    $this->run('git add .')
+                         ->run('git commit -m "' . $commit_info . '"')
+                         ->run('git push -u origin ' . $version);
+                }
+
                 return $this->end();
                 
             } catch (GitException  $e) {
