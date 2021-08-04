@@ -18,16 +18,16 @@ if (!class_exists('version_st24_dashboard')) {
             if (isset($_GET['sync'])) {
                 if (true === filter_var($_GET['sync'], FILTER_VALIDATE_BOOLEAN)) {
 
-                    $version = $this->version_branch();
+                    $branch_version = $this->version_branch();
 
-                    if ($version) {
+                    if ($branch_version) {
 
                         $current_user = wp_get_current_user();
 
                         $user_email = strlen($current_user->user_email) ? $current_user->user_email : $current_user->display_login;
                         $user_name  = strlen($current_user->user_nicename) ? $current_user->user_nicename : $current_user->display_name;
 
-                        $output = $this->repository->syncRepository($version, $this->message, $user_email, $user_name);
+                        $output = $this->repository->syncRepository($branch_version, $this->message, $user_email, $user_name);
 
                         set_transient('version_sync_action', 'started', 60);
 
@@ -56,7 +56,8 @@ if (!class_exists('version_st24_dashboard')) {
         public function plugin_dashboard_page() {
 
             $repo_config    = $this->repository->getConfig();
-            $current_branch = $this->version_branch() ?? '???';
+            $branch_version = $this->version_branch();
+            $branch_current = $this->repository->setCurrentBranch($branch_version);
             $commits_limit  = 20;
             $commits        = $this->repository->getCommits($commits_limit);
             $status         = $this->repository->hasChanges();
@@ -65,7 +66,7 @@ if (!class_exists('version_st24_dashboard')) {
             echo '<div class="wrap version-dashboard">';
 
             echo '<h1>Version ST24 / Dashboard</h1>';
-            echo '<h4>Current branch: <span class="branch-name">' . $current_branch . '</span></h4>';
+            echo '<h4>Current branch: <span class="branch-name">' . $branch_current . '</span></h4>';
             echo '<div class="button-sync">';
             echo '<a href="tools.php?page=version_st24&sync=true" type="button" class="btn btn-primary w-200 ' . $disabled . '" ' . $disabled . '>SAVE</a>';
             echo '<br>*send your changes to application repository';

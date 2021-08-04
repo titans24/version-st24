@@ -112,6 +112,28 @@ if ( ! class_exists( 'version_st24_repository' ) ) {
         }
 
         /**
+         * Switch branch
+         * `git checkout`
+         *
+         * @return bool
+         * @throws GitException
+         */
+        public function setCurrentBranch($branch) {
+            try {
+                if ( $this->getCurrentBranchName() !== $branch ) {
+                    $this->begin();
+                    $this->run('git checkout ' . $branch );
+                    $this->end();
+                }
+
+                return $this->getCurrentBranchName();
+                
+            } catch (GitException  $e) {
+                $this->errorMessage = 'Branch checkout failed.';
+            }
+        }
+
+        /**
          * Gets commits data
          * `git log` + magic
          *
@@ -162,21 +184,21 @@ if ( ! class_exists( 'version_st24_repository' ) ) {
             }
         }
 
-        public function syncRepository($version, $message = 'version ST24 auto sync', $author_email = 'unknow@titans24.com', $author_name = 'Version ST24')
+        public function syncRepository($branch_version, $message = 'version ST24 auto sync', $author_email = 'unknow@titans24.com', $author_name = 'Version ST24')
         {
             try {
                 $commit_info = ' <' . date('Ymd-His') . '> <' . $author_email . '> ' . $message;
 
                 $this->begin();
 
-                if ( false !== strpos( $version, '.' ) ) {
+                if ( false !== strpos( $branch_version, '.' ) ) {
                     $this->run('git add .')
                          ->run('git commit -m "' . $commit_info . '"')
-                         ->run('git push -u origin release/' . $version);
+                         ->run('git push -u origin release/' . $branch_version);
                 } else {
                     $this->run('git add .')
                          ->run('git commit -m "' . $commit_info . '"')
-                         ->run('git push -u origin ' . $version);
+                         ->run('git push -u origin ' . $branch_version);
                 }
 
                 return $this->end();

@@ -117,7 +117,7 @@ if ( ! class_exists( 'version_st24' ) ) {
                         if ( true === $this->repository->hasChanges() ) {
                             ?>
                                 <div class="notice notice-warning is-dismissible">
-                                    <p><?php _e( 'Application sync in progress (~3min)', 'st24' ); ?></p>
+                                    <p><?php _e( 'Application sync in progress (~3-10min)', 'st24' ); ?></p>
                                 </div>
                                 <?php
                         } else {
