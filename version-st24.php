@@ -153,7 +153,7 @@ if ( ! class_exists( 'version_st24' ) ) {
         }
 
         private function version_exist() {
-            $this->version = @file_get_contents( './../VERSION' );
+            $this->version = @file_get_contents( './../VERSION' ) ?? 'main';
 
             return is_string( $this->version );
         }
